@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/auth-service/auth-service.iml" filepath="$PROJECT_DIR$/auth-service/auth-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/gateway-service/gateway-service.iml" filepath="$PROJECT_DIR$/gateway-service/gateway-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kafka-consumer-service/kafka-consumer-service.iml" filepath="$PROJECT_DIR$/kafka-consumer-service/kafka-consumer-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kafka-producer-service/kafka-producer-service.iml" filepath="$PROJECT_DIR$/kafka-producer-service/kafka-producer-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rest-template-and-messaging.iml" filepath="$PROJECT_DIR$/rest-template-and-messaging.iml" />
+    </modules>
+  </component>
+</project>

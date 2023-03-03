@@ -1,0 +1,172 @@
+version: '3'
+
+services:
+  gateway-service:
+    platform: 'linux/amd64'
+    image: 'gateway-service:latest'
+    container_name: gateway-service
+    build:
+      context: gateway-service
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+  auth-service:
+    platform: 'linux/amd64'
+    image: 'auth-service:latest'
+    container_name: auth-service
+    build:
+      context: auth-service
+      dockerfile: Dockerfile
+    depends_on:
+      - user-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/user_db
+      - SPRING_DATASOURCE_USERNAME=user_db
+      - SPRING_DATASOURCE_PASSWORD=user_db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8085
+    expose:
+      - "8085"
+    ports:
+      - "8085:8085"
+#  lesson-service:
+#    platform: 'linux/amd64'
+#    image: 'lesson-service:latest'
+#    container_name: lesson-service
+#    build:
+#      context: lesson-service
+#      dockerfile: Dockerfile
+#    depends_on:
+#      - lesson-db
+#      - cache-redis-db
+#    environment:
+#      - SPRING_DATASOURCE_URL=jdbc:postgresql://lesson-db:5432/lesson_db
+#      - SPRING_DATASOURCE_USERNAME=lesson_db
+#      - SPRING_DATASOURCE_PASSWORD=lesson_db
+#      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+#      - SERVER_PORT=8081
+#      - spring.redis.host=cache-redis-db
+#      - spring.redis.port=6379
+#      - REDIS_PASSWORD=eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+#    expose:
+#      - "8081"
+#    ports:
+#      - "8081:8081"
+  kafka-producer-service:
+    platform: 'linux/amd64'
+    image: 'kafka-producer-service:latest'
+    container_name: kafka-producer-service
+    build:
+      context: kafka-producer-service
+      dockerfile: Dockerfile
+    depends_on:
+      - broker
+    environment:
+      - SERVER_PORT=8082
+      - SPRING_KAFKA_CONSUMER_GROUP-ID=tpd-logger
+      - SPRING_KAFKA_CONSUMER_AUTO-OFFSET-RESET=earliest
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=PLAINTEXT://broker:29092
+      - tpd.topic-name=advice-topic
+      - tpd.messages-per-request=10
+      - spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+      - spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer
+    expose:
+      - "8082"
+    ports:
+      - "8082:8082"
+  kafka-consumer-service:
+    platform: 'linux/amd64'
+    image: 'kafka-consumer-service:latest'
+    container_name: kafka-consumer-service
+    build:
+      context: kafka-consumer-service
+      dockerfile: Dockerfile
+    depends_on:
+      - broker
+    environment:
+      - SERVER_PORT=8082
+      - SPRING_KAFKA_CONSUMER_GROUP-ID=tpd-logger
+      - SPRING_KAFKA_CONSUMER_AUTO-OFFSET-RESET=earliest
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=PLAINTEXT://broker:29092
+      - tpd.topic-name=advice-topic
+      - tpd.messages-per-request=10
+    expose:
+      - "8083"
+    ports:
+      - "8083:8083"
+  user-db:
+    image: 'postgres:15-alpine'
+    container_name: user-db
+    environment:
+      - POSTGRES_USER=user_db
+      - POSTGRES_PASSWORD=user_db
+      - POSTGRES_DB=user_db
+    volumes:
+      - user_db:/var/lib/postgresql/data
+    ports:
+      - "5438:5432"
+#  lesson-db:
+#    image: 'postgres:15-alpine'
+#    container_name: lesson-db
+#    environment:
+#      - POSTGRES_USER=lesson_db
+#      - POSTGRES_PASSWORD=lesson_db
+#      - POSTGRES_DB=lesson_db
+#    volumes:
+#      - lesson_db:/var/lib/postgresql/data
+#    ports:
+#      - "5439:5432"
+#  cache-redis-db:
+#    image: redis:6.2-alpine
+#    container_name: cache-redis-db
+#    restart: always
+#    ports:
+#      - '6379:6379'
+#    volumes:
+#      - cache_redis_db:/data
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  broker:
+    image: confluentinc/cp-kafka
+    container_name: broker
+    ports:
+      # To learn about configuring Kafka for access across networks see
+      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+      - "9092:9092"
+      - "29092:29092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME:  PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#  rabbitmq:
+#    image: rabbitmq:3-management-alpine
+#    container_name: 'rabbitmq-local'
+#    expose:
+#      - "15672"
+#      - "5672"
+#    ports:
+#      - "5673:5672"
+#      - "15673:15672"
+#    volumes:
+#      - rabbit_mq1:/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+#      - rabbit_mq2:/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+volumes:
+  user_db:
+#  lesson_db:
+#  cache_redis_db:
+  rabbit_mq1:
+  rabbit_mq2:
